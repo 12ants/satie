@@ -1,5 +1,6 @@
-import { COMPOSITIONS, RADIO_STATIONS, generateSatieProceduralComposition } from '../data/compositions.ts';
-import { Composition, NoteEvent, PlaybackEngine, RadioStation, RandomizerSettings, CompositionMood, AudioPlayerState } from '../types/satie.ts';
+import { COMPOSITIONS, RADIO_STATIONS } from '../data/compositions.ts';
+import { GenerativeSatieEngine } from '../data/generativeEngine.ts';
+import { Composition, NoteEvent, PlaybackEngine, RadioStation, RandomizerSettings, CompositionMood, AudioPlayerState, GenerativeArchetype, GenerativeSettings } from '../types/satie.ts';
 import { pianoSynth } from './pianoSynth.ts';
 
 export type { AudioPlayerState };
@@ -22,7 +23,15 @@ class AudioManager {
     mode: 'random',
     tempoScale: 1.0,
     moodFilter: 'all',
-    silenceGapSeconds: 3
+    silenceGapSeconds: 3,
+    generative: {
+      archetype: 'auto-cycle',
+      density: 'balanced',
+      rootKey: 'auto',
+      mode: 'auto',
+      ornamentation: 0.5,
+      register: 'full'
+    }
   };
 
   private proceduralIndex = 1;
@@ -251,8 +260,7 @@ class AudioManager {
 
   private executePlayNext() {
     if (this.randomizer.mode === 'generative') {
-      this.proceduralIndex += 1;
-      const genComp = generateSatieProceduralComposition(this.proceduralIndex);
+      const genComp = GenerativeSatieEngine.generate(this.randomizer.generative);
       this.setEngine('felt-piano');
       this.play(genComp);
       return;
@@ -261,7 +269,6 @@ class AudioManager {
     const pool = this.getAvailableCompositions();
 
     if (this.randomizer.shuffle) {
-      // Pick random distinct track
       const candidates = pool.filter((c) => c.id !== this.currentComposition.id);
       const chosen = candidates.length > 0
         ? candidates[Math.floor(Math.random() * candidates.length)]
@@ -283,8 +290,7 @@ class AudioManager {
 
   public randomizeNow() {
     if (this.randomizer.mode === 'generative') {
-      this.proceduralIndex += 1;
-      const genComp = generateSatieProceduralComposition(this.proceduralIndex);
+      const genComp = GenerativeSatieEngine.generate(this.randomizer.generative);
       this.setEngine('felt-piano');
       this.play(genComp);
       return;
@@ -296,6 +302,24 @@ class AudioManager {
       ? candidates[Math.floor(Math.random() * candidates.length)]
       : pool[0];
     this.play(chosen);
+  }
+
+  public generateImprovisation(forcedArchetype?: GenerativeArchetype) {
+    this.updateRandomizer({ mode: 'generative' });
+    const genComp = GenerativeSatieEngine.generate(this.randomizer.generative, forcedArchetype);
+    this.setEngine('felt-piano');
+    this.play(genComp);
+  }
+
+  public updateGenerativeSettings(settings: Partial<GenerativeSettings>) {
+    this.randomizer = {
+      ...this.randomizer,
+      generative: {
+        ...this.randomizer.generative,
+        ...settings
+      }
+    };
+    this.emitState();
   }
 
   public updateRandomizer(settings: Partial<RandomizerSettings>) {

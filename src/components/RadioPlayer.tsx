@@ -10,13 +10,15 @@ interface RadioPlayerProps {
   onOpenRandomizerTab: () => void;
   onOpenMixerTab: () => void;
   onOpenCatalogTab: () => void;
+  onOpenGenerativeTab: () => void;
 }
 
 export const RadioPlayer: React.FC<RadioPlayerProps> = ({
   playerState,
   onOpenRandomizerTab,
   onOpenMixerTab,
-  onOpenCatalogTab
+  onOpenCatalogTab,
+  onOpenGenerativeTab
 }) => {
   const formatTime = (seconds: number) => {
     if (isNaN(seconds) || seconds < 0) return '0:00';
@@ -26,13 +28,14 @@ export const RadioPlayer: React.FC<RadioPlayerProps> = ({
   };
 
   const { randomizer } = playerState;
+  const isGenerative = playerState.currentComposition.collection === 'Generative Improvisation';
 
   return (
     <div className="space-y-3 font-mono text-xs">
       {/* Station Selector Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1.5 rounded border border-[#222222] bg-[#121212]">
         {RADIO_STATIONS.map((station) => {
-          const isActive = playerState.currentStation.id === station.id;
+          const isActive = playerState.currentStation.id === station.id && !isGenerative;
           return (
             <button
               key={station.id}
@@ -64,6 +67,11 @@ export const RadioPlayer: React.FC<RadioPlayerProps> = ({
               <span className="text-[11px] text-[#666666]">
                 [{playerState.currentComposition.year}]
               </span>
+              {isGenerative && (
+                <span className="text-[10px] font-bold bg-[#ffffff] text-[#0a0a0a] px-1.5 py-0.2 rounded">
+                  PROCEDURAL
+                </span>
+              )}
             </div>
 
             <div className="text-[11px] text-[#888888] flex items-center gap-2 mt-0.5">
@@ -73,15 +81,26 @@ export const RadioPlayer: React.FC<RadioPlayerProps> = ({
               <span className="text-[#444444]">·</span>
               <span className="uppercase text-[#666666]">{playerState.currentComposition.mood}</span>
             </div>
+
+            {playerState.currentComposition.frenchMarking && isGenerative && (
+              <div className="text-[10px] text-[#888888] italic mt-1">
+                « {playerState.currentComposition.frenchMarking} »
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[10px] text-[#666666]">ENGINE:</span>
+            <button
+              onClick={onOpenGenerativeTab}
+              className="px-2 py-0.5 text-[10px] rounded border border-[#444444] bg-[#202020] text-[#ffffff] hover:bg-[#2a2a2a] transition-colors"
+            >
+              GENERATIVE STUDIO →
+            </button>
             <button
               onClick={() => audioManager.setEngine(playerState.engine === 'felt-piano' ? 'archival' : 'felt-piano')}
               className="px-2 py-0.5 text-[10px] rounded border border-[#333333] bg-[#181818] text-[#cccccc] hover:text-[#ffffff]"
             >
-              {playerState.engine === 'felt-piano' ? 'FELT PIANO (SYNTH)' : 'ARCHIVAL (STREAM)'}
+              {playerState.engine === 'felt-piano' ? 'FELT PIANO' : 'ARCHIVAL'}
             </button>
           </div>
         </div>
@@ -139,13 +158,22 @@ export const RadioPlayer: React.FC<RadioPlayerProps> = ({
             </button>
           </div>
 
-          {/* Randomizer Quick Controls */}
+          {/* Randomizer & Generative Quick Controls */}
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => audioManager.generateImprovisation()}
+              className="px-2.5 py-1.5 text-[11px] rounded border border-[#ffffff] bg-[#ffffff] text-[#0a0a0a] font-bold hover:bg-[#e0e0e0] transition-colors flex items-center gap-1"
+              title="Generate new original movement"
+            >
+              <RefreshCw className="h-3 w-3" />
+              <span>IMPROVISE</span>
+            </button>
+
             <button
               onClick={() => audioManager.updateRandomizer({ shuffle: !randomizer.shuffle })}
               className={`px-2.5 py-1.5 text-[11px] rounded border transition-colors flex items-center gap-1.5 ${
                 randomizer.shuffle
-                  ? 'bg-[#ffffff] text-[#0a0a0a] border-[#ffffff] font-semibold'
+                  ? 'bg-[#222222] text-[#ffffff] border-[#444444] font-medium'
                   : 'bg-[#141414] text-[#666666] border-[#222222] hover:text-[#cccccc]'
               }`}
               title="Toggle Shuffle"
@@ -155,17 +183,9 @@ export const RadioPlayer: React.FC<RadioPlayerProps> = ({
             </button>
 
             <button
-              onClick={() => audioManager.randomizeNow()}
-              className="p-2 text-[#777777] hover:text-[#ffffff] rounded border border-[#222222] bg-[#141414] transition-colors"
-              title="Pick next random tune"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-            </button>
-
-            <button
               onClick={onOpenRandomizerTab}
               className="px-2 py-1.5 text-[10px] text-[#777777] hover:text-[#cccccc] rounded border border-[#222222] bg-[#141414]"
-              title="Randomizer settings"
+              title="Shuffle & Randomizer settings"
             >
               MODE:{randomizer.mode.toUpperCase()}
             </button>

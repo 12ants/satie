@@ -5,12 +5,13 @@ import { Header } from './components/Header.tsx';
 import { RadioPlayer } from './components/RadioPlayer.tsx';
 import { CatalogDrawer } from './components/CatalogDrawer.tsx';
 import { RandomizerPanel } from './components/RandomizerPanel.tsx';
+import { GenerativeStudio } from './components/GenerativeStudio.tsx';
 import { AmbientMixer } from './components/AmbientMixer.tsx';
 import { SleepTimerModal } from './components/SleepTimerModal.tsx';
 
 export default function App() {
   const [playerState, setPlayerState] = useState<AudioPlayerState>(audioManager.getState());
-  const [activeTab, setActiveTab] = useState<'broadcast' | 'catalog' | 'mixer' | 'randomizer'>('broadcast');
+  const [activeTab, setActiveTab] = useState<'broadcast' | 'catalog' | 'mixer' | 'randomizer' | 'generative'>('broadcast');
   const [isSleepModalOpen, setIsSleepModalOpen] = useState(false);
 
   useEffect(() => {
@@ -38,11 +39,16 @@ export default function App() {
             onOpenRandomizerTab={() => setActiveTab('randomizer')}
             onOpenMixerTab={() => setActiveTab('mixer')}
             onOpenCatalogTab={() => setActiveTab('catalog')}
+            onOpenGenerativeTab={() => setActiveTab('generative')}
           />
         )}
 
         {activeTab === 'catalog' && (
           <CatalogDrawer playerState={playerState} />
+        )}
+
+        {activeTab === 'generative' && (
+          <GenerativeStudio playerState={playerState} />
         )}
 
         {activeTab === 'randomizer' && (

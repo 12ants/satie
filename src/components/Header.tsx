@@ -5,8 +5,8 @@ import { AudioPlayerState } from '../types/satie.ts';
 
 interface HeaderProps {
   playerState: AudioPlayerState;
-  activeTab: 'broadcast' | 'catalog' | 'mixer' | 'randomizer';
-  setActiveTab: (tab: 'broadcast' | 'catalog' | 'mixer' | 'randomizer') => void;
+  activeTab: 'broadcast' | 'catalog' | 'mixer' | 'randomizer' | 'generative';
+  setActiveTab: (tab: 'broadcast' | 'catalog' | 'mixer' | 'randomizer' | 'generative') => void;
   onOpenSleepTimer: () => void;
 }
 
@@ -18,7 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#222222] bg-[#0c0c0c]/95 backdrop-blur-sm font-mono text-xs">
-      <div className="mx-auto flex h-13 max-w-6xl items-center justify-between gap-6 px-4 sm:px-8">
+      <div className="mx-auto flex h-13 max-w-6xl items-center justify-between gap-4 px-4 sm:px-8">
         {/* Brand */}
         <button
           onClick={() => setActiveTab('broadcast')}
@@ -27,25 +27,26 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="font-semibold tracking-wider text-[#ffffff]">
             RADIO SATIE
           </span>
-          <span className="text-[#555555]">
+          <span className="text-[#555555] hidden lg:inline">
             // {playerState.currentStation.frequency} MHz
           </span>
         </button>
 
         {/* Minimal Monospace Nav Links */}
-        <nav className="flex items-center gap-1 sm:gap-2">
+        <nav className="flex items-center gap-1 overflow-x-auto">
           {(
             [
               ['broadcast', 'BROADCAST'],
               ['catalog', 'TUNES'],
-              ['randomizer', 'RANDOMIZER'],
+              ['generative', 'GENERATIVE'],
+              ['randomizer', 'SHUFFLE'],
               ['mixer', 'ATMOSPHERE']
             ] as const
           ).map(([key, label]) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
-              className={`px-2.5 py-1 text-[11px] rounded transition-colors whitespace-nowrap ${
+              className={`px-2 py-1 text-[11px] rounded transition-colors whitespace-nowrap ${
                 activeTab === key
                   ? 'bg-[#222222] text-[#ffffff] font-medium'
                   : 'text-[#888888] hover:text-[#cccccc] hover:bg-[#161616]'

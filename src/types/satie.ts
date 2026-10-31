@@ -35,12 +35,24 @@ export interface RadioStation {
   tagline: string;
 }
 
+export type GenerativeArchetype = 'gymnopedique' | 'gnossien' | 'ogive' | 'ameublement' | 'vexations';
+
+export interface GenerativeSettings {
+  archetype: GenerativeArchetype | 'auto-cycle';
+  density: 'sparse' | 'balanced' | 'rich';
+  rootKey: 'auto' | 'D' | 'G' | 'C' | 'E' | 'A' | 'F';
+  mode: 'auto' | 'dorian' | 'aeolian' | 'lydian' | 'phrygian';
+  ornamentation: number; // 0 to 1
+  register: 'mid' | 'high' | 'full';
+}
+
 export interface RandomizerSettings {
   shuffle: boolean;
   mode: 'random' | 'ambient-weighted' | 'generative';
   tempoScale: number; // e.g. 0.8 to 1.2
   moodFilter: 'all' | CompositionMood;
   silenceGapSeconds: number; // 0, 3, 6, 10
+  generative: GenerativeSettings;
 }
 
 export type PlaybackEngine = 'archival' | 'felt-piano';
