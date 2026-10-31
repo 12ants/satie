@@ -2,6 +2,7 @@ import { COMPOSITIONS, RADIO_STATIONS } from '../data/compositions.ts';
 import { GenerativeSatieEngine } from '../data/generativeEngine.ts';
 import { Composition, NoteEvent, PlaybackEngine, RadioStation, RandomizerSettings, CompositionMood, AudioPlayerState, GenerativeArchetype, GenerativeSettings } from '../types/satie.ts';
 import { pianoSynth } from './pianoSynth.ts';
+import { getFullPlayableScore } from './scoreUtils.ts';
 
 export type { AudioPlayerState };
 type AudioStateListener = (state: AudioPlayerState) => void;
@@ -30,7 +31,8 @@ class AudioManager {
       rootKey: 'auto',
       mode: 'auto',
       ornamentation: 0.5,
-      register: 'full'
+      register: 'full',
+      targetDuration: 160
     }
   };
 
@@ -431,7 +433,7 @@ class AudioManager {
 
   private startSynthSchedule(offsetSeconds = 0) {
     this.stopSynthSchedule();
-    const score = this.currentComposition.score;
+    const score = getFullPlayableScore(this.currentComposition);
     if (!score || score.length === 0) return;
 
     const tempoScale = Math.max(0.5, Math.min(2.0, this.randomizer.tempoScale));

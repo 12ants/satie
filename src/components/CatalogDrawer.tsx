@@ -3,6 +3,7 @@ import { Play, Pause, Search } from 'lucide-react';
 import { COMPOSITIONS } from '../data/compositions.ts';
 import { audioManager } from '../audio/audioManager.ts';
 import { AudioPlayerState, CompositionMood } from '../types/satie.ts';
+import { exportToMidi, exportToMp3 } from '../audio/exporter.ts';
 
 interface CatalogDrawerProps {
   playerState: AudioPlayerState;
@@ -11,6 +12,20 @@ interface CatalogDrawerProps {
 export const CatalogDrawer: React.FC<CatalogDrawerProps> = ({ playerState }) => {
   const [filterMood, setFilterMood] = useState<'all' | CompositionMood>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [exportingId, setExportingId] = useState<string | null>(null);
+
+  const handleExportMp3 = async (comp: typeof COMPOSITIONS[0], e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (exportingId) return;
+    try {
+      setExportingId(comp.id);
+      await exportToMp3(comp, playerState.randomizer.tempoScale);
+    } catch (err) {
+      console.error('MP3 export failed:', err);
+    } finally {
+      setExportingId(null);
+    }
+  };
 
   const filtered = COMPOSITIONS.filter((c) => {
     const matchesMood = filterMood === 'all' || c.mood === filterMood;
@@ -125,7 +140,35 @@ export const CatalogDrawer: React.FC<CatalogDrawerProps> = ({ playerState }) => 
                     </td>
 
                     <td className="py-2 px-3 text-right text-[#888888] tabular-nums text-[11px]">
-                      {comp.durationFormatted}
+                      <div className="flex items-center justify-end gap-1.5">
+                        <span className="hidden sm:inline mr-2">{comp.durationFormatted}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            try {
+                              exportToMidi(comp);
+                            } catch (err) {
+                              console.error('MIDI export error:', err);
+                            }
+                          }}
+                          className="px-1.5 py-0.5 text-[9px] rounded border border-[#2b2b2b] text-[#777777] hover:text-[#ffffff] hover:border-[#444444]"
+                          title="Download MIDI"
+                        >
+                          .MID
+                        </button>
+                        <button
+                          onClick={(e) => handleExportMp3(comp, e)}
+                          disabled={exportingId === comp.id}
+                          className={`px-1.5 py-0.5 text-[9px] rounded border transition-colors ${
+                            exportingId === comp.id
+                              ? 'bg-[#2a2a2a] text-[#ffffff] border-[#555555] cursor-wait'
+                              : 'border-[#2b2b2b] text-[#777777] hover:text-[#ffffff] hover:border-[#444444]'
+                          }`}
+                          title="Download MP3"
+                        >
+                          {exportingId === comp.id ? '...' : '.MP3'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

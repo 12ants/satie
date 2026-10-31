@@ -1,7 +1,9 @@
-import React from 'react';
-import { Sparkles, Play, RefreshCw, Radio, Sliders } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, RefreshCw, Download, Bookmark, Trash2, Play, Pause, Check } from 'lucide-react';
 import { audioManager } from '../audio/audioManager.ts';
-import { AudioPlayerState, GenerativeArchetype } from '../types/satie.ts';
+import { exportToMidi, exportToMp3 } from '../audio/exporter.ts';
+import { getSavedTunes, saveTune, removeSavedTune } from '../utils/savedTunes.ts';
+import { AudioPlayerState, GenerativeArchetype, Composition } from '../types/satie.ts';
 
 interface GenerativeStudioProps {
   playerState: AudioPlayerState;
@@ -10,6 +12,53 @@ interface GenerativeStudioProps {
 export const GenerativeStudio: React.FC<GenerativeStudioProps> = ({ playerState }) => {
   const { generative } = playerState.randomizer;
   const isGenerativeActive = playerState.randomizer.mode === 'generative';
+  const current = playerState.currentComposition;
+
+  const [savedList, setSavedList] = useState<Composition[]>([]);
+  const [isExportingMp3, setIsExportingMp3] = useState(false);
+  const [mp3Progress, setMp3Progress] = useState(0);
+  const [justSaved, setJustSaved] = useState(false);
+
+  useEffect(() => {
+    setSavedList(getSavedTunes());
+  }, []);
+
+  const handleSaveCurrent = () => {
+    const success = saveTune(current);
+    if (success) {
+      setSavedList(getSavedTunes());
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 2000);
+    }
+  };
+
+  const handleDeleteSaved = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    removeSavedTune(id);
+    setSavedList(getSavedTunes());
+  };
+
+  const handleExportMidi = () => {
+    try {
+      exportToMidi(current);
+    } catch (err) {
+      console.error('MIDI export error:', err);
+    }
+  };
+
+  const handleExportMp3 = async () => {
+    if (isExportingMp3) return;
+    try {
+      setIsExportingMp3(true);
+      setMp3Progress(0);
+      await exportToMp3(current, playerState.randomizer.tempoScale, (p) => setMp3Progress(p));
+    } catch (err) {
+      console.error('MP3 export error:', err);
+    } finally {
+      setIsExportingMp3(false);
+      setMp3Progress(0);
+    }
+  };
 
   const archetypes: Array<{ id: GenerativeArchetype | 'auto-cycle'; label: string; desc: string }> = [
     { id: 'gymnopedique', label: 'GYMNOPÉDIE', desc: '3/4 waltz pedal bass, maj7/min9 chords, sparse melody' },
@@ -63,6 +112,56 @@ export const GenerativeStudio: React.FC<GenerativeStudioProps> = ({ playerState 
         </div>
       </div>
 
+      {/* Current Piece Save & Export Toolbar */}
+      <div className="p-3 rounded border border-[#2a2a2a] bg-[#161616] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-[#888888]">CURRENT PIECE:</span>
+            <span className="font-bold text-[#ffffff] truncate">{current.title}</span>
+            <span className="text-[10px] text-[#666666]">[{current.key}]</span>
+          </div>
+          {current.frenchMarking && (
+            <div className="text-[10px] text-[#888888] italic truncate">
+              « {current.frenchMarking} »
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+          <button
+            onClick={handleSaveCurrent}
+            className="px-2.5 py-1 text-[11px] rounded border border-[#333333] bg-[#1c1c1c] text-[#cccccc] hover:text-[#ffffff] hover:border-[#555555] transition-colors flex items-center gap-1"
+            title="Save to local library"
+          >
+            {justSaved ? <Check className="h-3 w-3 text-green-400" /> : <Bookmark className="h-3 w-3" />}
+            <span>{justSaved ? 'SAVED' : 'SAVE TUNE'}</span>
+          </button>
+
+          <button
+            onClick={handleExportMidi}
+            className="px-2.5 py-1 text-[11px] rounded border border-[#333333] bg-[#1c1c1c] text-[#cccccc] hover:text-[#ffffff] hover:border-[#555555] transition-colors flex items-center gap-1"
+            title="Download Standard MIDI file"
+          >
+            <Download className="h-3 w-3" />
+            <span>EXPORT .MID</span>
+          </button>
+
+          <button
+            onClick={handleExportMp3}
+            disabled={isExportingMp3}
+            className={`px-2.5 py-1 text-[11px] font-bold rounded transition-colors flex items-center gap-1 ${
+              isExportingMp3
+                ? 'bg-[#333333] text-[#888888] cursor-wait'
+                : 'bg-[#ffffff] text-[#0a0a0a] hover:bg-[#e0e0e0]'
+            }`}
+            title="Render offline and download MP3 audio"
+          >
+            <Download className="h-3 w-3" />
+            <span>{isExportingMp3 ? `ENCODING ${mp3Progress}%` : 'EXPORT .MP3'}</span>
+          </button>
+        </div>
+      </div>
+
       {/* Archetype Selector Strip */}
       <div className="p-3.5 rounded border border-[#222222] bg-[#121212] space-y-2.5">
         <div className="flex items-center justify-between text-[#888888]">
@@ -100,25 +199,6 @@ export const GenerativeStudio: React.FC<GenerativeStudioProps> = ({ playerState 
           {archetypes.find((a) => a.id === generative.archetype)?.desc}
         </p>
       </div>
-
-      {/* Currently Playing Improvisation Readout if Generative */}
-      {playerState.currentComposition.collection === 'Generative Improvisation' && (
-        <div className="p-3 rounded border border-[#333333] bg-[#151515] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <div className="text-[#ffffff] font-bold flex items-center gap-2">
-              <span>{playerState.currentComposition.title}</span>
-              <span className="text-[10px] text-[#777777]">[{playerState.currentComposition.key}]</span>
-            </div>
-            <div className="text-[11px] text-[#888888] italic mt-0.5">
-              « {playerState.currentComposition.frenchMarking} »
-            </div>
-          </div>
-          <div className="text-[10px] text-[#666666] tabular-nums sm:text-right">
-            <div>NOTES: {playerState.currentComposition.score?.length || 0} EVENTS</div>
-            <div>TEMPO: {playerState.currentComposition.bpm} BPM ({playerState.currentComposition.timeSignature})</div>
-          </div>
-        </div>
-      )}
 
       {/* Deep Generative Parameter Matrix */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -204,12 +284,12 @@ export const GenerativeStudio: React.FC<GenerativeStudioProps> = ({ playerState 
         </div>
       </div>
 
-      {/* Additional Textural Controls: Ornamentation and Register */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* Textural Controls: Ornamentation, Register, and Target Runtime */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Melodic Ornamentation */}
         <div className="p-3.5 rounded border border-[#222222] bg-[#121212] space-y-2">
           <div className="flex items-center justify-between text-[#888888]">
-            <span>SATIE ORNAMENTATION PROBABILITY</span>
+            <span>ORNAMENTATION</span>
             <span className="text-[10px] text-[#555555]">{Math.round(generative.ornamentation * 100)}%</span>
           </div>
 
@@ -231,9 +311,6 @@ export const GenerativeStudio: React.FC<GenerativeStudioProps> = ({ playerState 
               </button>
             ))}
           </div>
-          <p className="text-[9px] text-[#555555]">
-            Controls the frequency of characteristic grace notes, appoggiaturas, and modal turns.
-          </p>
         </div>
 
         {/* Melodic Register */}
@@ -257,15 +334,122 @@ export const GenerativeStudio: React.FC<GenerativeStudioProps> = ({ playerState 
                     : 'bg-[#161616] text-[#777777] border-[#222222] hover:text-[#cccccc]'
                 }`}
               >
-                {r === 'mid' ? 'MID-WARM' : r === 'high' ? 'HIGH-SHIMMER' : 'FULL RANGE'}
+                {r === 'mid' ? 'MID' : r === 'high' ? 'HIGH' : 'FULL'}
               </button>
             ))}
           </div>
-          <p className="text-[9px] text-[#555555]">
-            Dictates pitch spread across bass octave 2 up to crystalline octave 6.
-          </p>
+        </div>
+
+        {/* Target Runtime */}
+        <div className="p-3.5 rounded border border-[#222222] bg-[#121212] space-y-2">
+          <div className="flex items-center justify-between text-[#888888]">
+            <span>TARGET RUNTIME</span>
+            <span className="text-[10px] text-[#555555]">
+              {Math.floor((generative.targetDuration || 160) / 60)}:{String((generative.targetDuration || 160) % 60).padStart(2, '0')}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { sec: 120, label: '2:00' },
+              { sec: 150, label: '2:30' },
+              { sec: 180, label: '3:00' },
+              { sec: 240, label: '4:00' }
+            ].map(({ sec, label }) => {
+              const currentDur = generative.targetDuration || 160;
+              const isSelected = currentDur === sec;
+              return (
+                <button
+                  key={sec}
+                  onClick={() => {
+                    audioManager.updateGenerativeSettings({ targetDuration: sec });
+                    audioManager.generateImprovisation();
+                  }}
+                  className={`py-1.5 text-[10px] rounded border transition-colors ${
+                    isSelected
+                      ? 'bg-[#ffffff] text-[#0a0a0a] border-[#ffffff] font-bold'
+                      : 'bg-[#161616] text-[#777777] border-[#222222] hover:text-[#cccccc]'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
+
+      {/* Saved Procedural Library */}
+      {savedList.length > 0 && (
+        <div className="p-3.5 rounded border border-[#222222] bg-[#121212] space-y-2.5">
+          <div className="flex items-center justify-between text-[#888888]">
+            <span>SAVED PROCEDURAL ARCHIVE ({savedList.length})</span>
+            <span className="text-[10px] text-[#555555]">LOCAL REPOSITORY</span>
+          </div>
+
+          <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+            {savedList.map((item) => {
+              const isPlayingThis = playerState.isPlaying && playerState.currentComposition.id === item.id;
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => audioManager.play(item)}
+                  className={`flex items-center justify-between p-2 rounded border border-[#222222] hover:bg-[#181818] cursor-pointer transition-colors ${
+                    playerState.currentComposition.id === item.id ? 'bg-[#1a1a1a] border-[#444444]' : 'bg-[#141414]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isPlayingThis) audioManager.pause();
+                        else audioManager.play(item);
+                      }}
+                      className="p-1 text-[#888888] hover:text-[#ffffff]"
+                    >
+                      {isPlayingThis ? <Pause className="h-3 w-3 fill-current" /> : <Play className="h-3 w-3 fill-current" />}
+                    </button>
+                    <div className="truncate">
+                      <span className="text-[#ffffff] font-medium">{item.title}</span>
+                      <span className="text-[#666666] text-[10px] ml-2">[{item.key}]</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        exportToMidi(item);
+                      }}
+                      className="px-1.5 py-0.5 text-[9px] rounded border border-[#333333] text-[#888888] hover:text-[#ffffff]"
+                      title="Download MIDI"
+                    >
+                      .MID
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        exportToMp3(item, playerState.randomizer.tempoScale);
+                      }}
+                      className="px-1.5 py-0.5 text-[9px] rounded border border-[#333333] text-[#888888] hover:text-[#ffffff]"
+                      title="Download MP3"
+                    >
+                      .MP3
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteSaved(item.id, e)}
+                      className="p-1 text-[#666666] hover:text-red-400"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -44,6 +44,7 @@ export interface GenerativeSettings {
   mode: 'auto' | 'dorian' | 'aeolian' | 'lydian' | 'phrygian';
   ornamentation: number; // 0 to 1
   register: 'mid' | 'high' | 'full';
+  targetDuration?: number; // Target runtime in seconds (e.g. 120, 150, 180)
 }
 
 export interface RandomizerSettings {

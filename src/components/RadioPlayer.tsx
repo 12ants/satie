@@ -4,6 +4,7 @@ import { audioManager } from '../audio/audioManager.ts';
 import { RADIO_STATIONS } from '../data/compositions.ts';
 import { Visualizer } from './Visualizer.tsx';
 import { AudioPlayerState } from '../types/satie.ts';
+import { exportToMidi, exportToMp3 } from '../audio/exporter.ts';
 
 interface RadioPlayerProps {
   playerState: AudioPlayerState;
@@ -29,6 +30,22 @@ export const RadioPlayer: React.FC<RadioPlayerProps> = ({
 
   const { randomizer } = playerState;
   const isGenerative = playerState.currentComposition.collection === 'Generative Improvisation';
+  const [isExportingMp3, setIsExportingMp3] = React.useState(false);
+  const [exportProgress, setExportProgress] = React.useState(0);
+
+  const handleMp3Export = async () => {
+    if (isExportingMp3) return;
+    try {
+      setIsExportingMp3(true);
+      setExportProgress(0);
+      await exportToMp3(playerState.currentComposition, playerState.randomizer.tempoScale, (p) => setExportProgress(p));
+    } catch (err) {
+      console.error('Failed to export MP3:', err);
+    } finally {
+      setIsExportingMp3(false);
+      setExportProgress(0);
+    }
+  };
 
   return (
     <div className="space-y-3 font-mono text-xs">
@@ -89,7 +106,32 @@ export const RadioPlayer: React.FC<RadioPlayerProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => {
+                try {
+                  exportToMidi(playerState.currentComposition);
+                } catch (err) {
+                  console.error('MIDI export error:', err);
+                }
+              }}
+              className="px-2 py-0.5 text-[10px] rounded border border-[#333333] bg-[#161616] text-[#cccccc] hover:text-[#ffffff] hover:border-[#555555] transition-colors"
+              title="Download Standard MIDI file"
+            >
+              .MID
+            </button>
+            <button
+              onClick={handleMp3Export}
+              disabled={isExportingMp3}
+              className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
+                isExportingMp3
+                  ? 'bg-[#2a2a2a] text-[#ffffff] border-[#666666] cursor-wait'
+                  : 'border-[#333333] bg-[#161616] text-[#cccccc] hover:text-[#ffffff] hover:border-[#555555]'
+              }`}
+              title="Render and download MP3 audio"
+            >
+              {isExportingMp3 ? `MP3 ${exportProgress}%` : '.MP3'}
+            </button>
             <button
               onClick={onOpenGenerativeTab}
               className="px-2 py-0.5 text-[10px] rounded border border-[#444444] bg-[#202020] text-[#ffffff] hover:bg-[#2a2a2a] transition-colors"
