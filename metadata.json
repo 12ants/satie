@@ -1,0 +1,6 @@
+{
+  "name": "Radio Satie",
+  "description": "An ambient classical radio streaming application dedicated to the piano compositions, furniture music, and philosophical whimsy of Erik Satie.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
