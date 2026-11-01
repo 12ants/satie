@@ -8,6 +8,7 @@ import { RandomizerPanel } from './components/RandomizerPanel.tsx';
 import { GenerativeStudio } from './components/GenerativeStudio.tsx';
 import { AmbientMixer } from './components/AmbientMixer.tsx';
 import { SleepTimerModal } from './components/SleepTimerModal.tsx';
+import { OfflineIndicator } from './components/OfflineIndicator.tsx';
 
 export default function App() {
   const [playerState, setPlayerState] = useState<AudioPlayerState>(audioManager.getState());
@@ -88,6 +89,9 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Offline Connectivity Status Pill */}
+      <OfflineIndicator />
     </div>
   );
 }

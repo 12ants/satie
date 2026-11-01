@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#0a0a0a" rx="96"/>
+  <!-- Subtle circular dial frame -->
+  <circle cx="256" cy="256" r="216" fill="none" stroke="#222222" stroke-width="4"/>
+  <circle cx="256" cy="256" r="184" fill="none" stroke="#333333" stroke-width="2" stroke-dasharray="6 8"/>
+
+  <!-- Satie Iconic Round Spectacles -->
+  <g stroke="#ffffff" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left lens -->
+    <circle cx="180" cy="190" r="54"/>
+    <!-- Right lens -->
+    <circle cx="332" cy="190" r="54"/>
+    <!-- Bridge -->
+    <path d="M 234 186 C 246 174, 266 174, 278 186"/>
+  </g>
+
+  <!-- Stylized Monospace Piano Keys Grid -->
+  <g transform="translate(106, 280)">
+    <!-- White Keys Base -->
+    <rect x="0" y="0" width="300" height="110" fill="#ededed" rx="8" stroke="#ffffff" stroke-width="2"/>
+    <!-- Key dividers -->
+    <line x1="42.8" y1="0" x2="42.8" y2="110" stroke="#121212" stroke-width="2.5"/>
+    <line x1="85.7" y1="0" x2="85.7" y2="110" stroke="#121212" stroke-width="2.5"/>
+    <line x1="128.5" y1="0" x2="128.5" y2="110" stroke="#121212" stroke-width="2.5"/>
+    <line x1="171.4" y1="0" x2="171.4" y2="110" stroke="#121212" stroke-width="2.5"/>
+    <line x1="214.2" y1="0" x2="214.2" y2="110" stroke="#121212" stroke-width="2.5"/>
+    <line x1="257.1" y1="0" x2="257.1" y2="110" stroke="#121212" stroke-width="2.5"/>
+
+    <!-- Black Keys -->
+    <rect x="28" y="0" width="28" height="66" fill="#121212" rx="3"/>
+    <rect x="71" y="0" width="28" height="66" fill="#121212" rx="3"/>
+    <rect x="156" y="0" width="28" height="66" fill="#121212" rx="3"/>
+    <rect x="199" y="0" width="28" height="66" fill="#121212" rx="3"/>
+    <rect x="242" y="0" width="28" height="66" fill="#121212" rx="3"/>
+  </g>
+
+  <!-- Radio Wave / Frequency Mark -->
+  <text x="256" y="440" font-family="monospace" font-size="22" font-weight="bold" fill="#777777" text-anchor="middle" letter-spacing="4">RADIO SATIE</text>
+</svg>

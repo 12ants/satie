@@ -2,6 +2,7 @@ import React from 'react';
 import { Play, Pause, Shuffle } from 'lucide-react';
 import { audioManager } from '../audio/audioManager.ts';
 import { AudioPlayerState } from '../types/satie.ts';
+import { PWAInstallButton } from './PWAInstallButton.tsx';
 
 interface HeaderProps {
   playerState: AudioPlayerState;
@@ -58,7 +59,9 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
 
         {/* Right Playback Status */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <PWAInstallButton />
+
           {playerState.sleepTimerRemaining !== null && (
             <button
               onClick={onOpenSleepTimer}

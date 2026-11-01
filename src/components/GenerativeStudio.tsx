@@ -18,6 +18,7 @@ export const GenerativeStudio: React.FC<GenerativeStudioProps> = ({ playerState 
   const [isExportingMp3, setIsExportingMp3] = useState(false);
   const [mp3Progress, setMp3Progress] = useState(0);
   const [justSaved, setJustSaved] = useState(false);
+  const [midiFormat, setMidiFormat] = useState<0 | 1>(1);
 
   useEffect(() => {
     setSavedList(getSavedTunes());
@@ -38,9 +39,9 @@ export const GenerativeStudio: React.FC<GenerativeStudioProps> = ({ playerState 
     setSavedList(getSavedTunes());
   };
 
-  const handleExportMidi = () => {
+  const handleExportMidi = (fmt: 0 | 1 = midiFormat) => {
     try {
-      exportToMidi(current);
+      exportToMidi(current, { format: fmt });
     } catch (err) {
       console.error('MIDI export error:', err);
     }
@@ -137,14 +138,23 @@ export const GenerativeStudio: React.FC<GenerativeStudioProps> = ({ playerState 
             <span>{justSaved ? 'SAVED' : 'SAVE TUNE'}</span>
           </button>
 
-          <button
-            onClick={handleExportMidi}
-            className="px-2.5 py-1 text-[11px] rounded border border-[#333333] bg-[#1c1c1c] text-[#cccccc] hover:text-[#ffffff] hover:border-[#555555] transition-colors flex items-center gap-1"
-            title="Download Standard MIDI file"
-          >
-            <Download className="h-3 w-3" />
-            <span>EXPORT .MID</span>
-          </button>
+          <div className="flex items-center rounded border border-[#333333] bg-[#1c1c1c] overflow-hidden">
+            <button
+              onClick={() => handleExportMidi(midiFormat)}
+              className="px-2.5 py-1 text-[11px] text-[#cccccc] hover:text-[#ffffff] transition-colors flex items-center gap-1"
+              title={`Download Standard MIDI file (${midiFormat === 1 ? 'Type 1: Grand Staff for DAWs/Scores' : 'Type 0: Single Track'})`}
+            >
+              <Download className="h-3 w-3" />
+              <span>EXPORT .MID</span>
+            </button>
+            <button
+              onClick={() => setMidiFormat(midiFormat === 1 ? 0 : 1)}
+              className="px-1.5 py-1 text-[9px] font-bold text-[#888888] hover:text-[#ffffff] bg-[#222222] border-l border-[#333333] transition-colors"
+              title="Click to toggle between Type 1 (Grand Staff) and Type 0 (Single Track)"
+            >
+              {midiFormat === 1 ? 'T1:DAW' : 'T0:SGL'}
+            </button>
+          </div>
 
           <button
             onClick={handleExportMp3}
